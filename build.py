@@ -39,6 +39,12 @@ EPISODES_PER_PAGE = 50
 ITUNES_NS = "http://www.itunes.com/dtds/podcast-1.0.dtd"
 NS = {"itunes": ITUNES_NS}
 
+# Live URLs voor foto- en categorie-mappings (wordt beheerd via admin.html)
+IMAGES_URL = "https://peoplepower-radio.s3.nl-ams.scw.cloud/episode-images.json"
+IMAGES_CUSTOM_URL = "https://peoplepower-radio.s3.nl-ams.scw.cloud/episode-images-custom.json"
+CATEGORIES_URL = "https://peoplepower-radio.s3.nl-ams.scw.cloud/episode-categories.json"
+CATEGORIES_CUSTOM_URL = "https://peoplepower-radio.s3.nl-ams.scw.cloud/episode-categories-custom.json"
+
 MONTHS_NL = [
     "januari", "februari", "maart", "april", "mei", "juni",
     "juli", "augustus", "september", "oktober", "november", "december",
@@ -170,6 +176,69 @@ def fetch_rss() -> str:
                      headers={"User-Agent": "PeoplePower-Build/1.0"})
     r.raise_for_status()
     return r.text
+
+
+def fetch_json(url: str, label: str) -> dict:
+    """Haal een JSON-bestand op. Geeft leeg dict bij fout (niet-kritisch)."""
+    try:
+        r = requests.get(url, timeout=10,
+                         headers={"User-Agent": "PeoplePower-Build/1.0"})
+        r.raise_for_status()
+        data = r.json()
+        print(f"   {label}: geladen")
+        return data
+    except Exception as e:
+        print(f"   {label}: NIET geladen ({e}). Fallback naar iTunes artwork.")
+        return {}
+
+
+def normalize_title(title: str) -> str:
+    """Normaliseer een titel voor byTitle-lookup (lowercase, whitespace collapse)."""
+    return re.sub(r"\s+", " ", (title or "").lower()).strip()
+
+
+def best_image_for(ep: dict, img_data: dict, custom_imgs: dict) -> str:
+    """Zoek de beste foto voor een aflevering. Prioriteit:
+    1. custom override (admin.html)
+    2. WordPress scrape op nummer
+    3. WordPress scrape op titel
+    4. iTunes RSS artwork (fallback)
+    """
+    num = str(ep.get("number") or "")
+    if num and num in custom_imgs:
+        return custom_imgs[num]
+    by_number = img_data.get("byNumber", {})
+    if num and num in by_number:
+        return by_number[num]
+    by_title = img_data.get("byTitle", {})
+    if by_title:
+        norm = normalize_title(ep.get("clean_title") or "")
+        if norm in by_title:
+            return by_title[norm]
+    return ep.get("image_url") or ""
+
+
+def best_cats_for(ep: dict, cat_data: dict, custom_cats: dict) -> list:
+    """Zoek de categorieen voor een aflevering."""
+    num = str(ep.get("number") or "")
+    if num and num in custom_cats:
+        return custom_cats[num]
+    by_number = cat_data.get("byNumber", {})
+    if num and num in by_number:
+        return by_number[num]
+    by_title = cat_data.get("byTitle", {})
+    if by_title:
+        norm = normalize_title(ep.get("clean_title") or "")
+        if norm in by_title:
+            return by_title[norm]
+    return []
+
+
+def cat_slug_to_name(slug: str, cat_data: dict) -> str:
+    for c in cat_data.get("categories", []):
+        if c.get("slug") == slug:
+            return c.get("name") or slug
+    return slug
 
 
 def parse_episodes(xml_text: str):
@@ -319,17 +388,23 @@ def render_episode_card(ep: dict, index: int) -> str:
     if len(ep['description_text']) > 200:
         desc = desc.rstrip() + "..."
 
+    img = ep.get('best_image') or ep['image_url']
+    cats_html = ""
+    if ep.get('cats_rendered'):
+        cats_html = '<span class="ep-row-cats">' + ep['cats_rendered'] + '</span>'
+
     return f"""        <article class="ep-row" itemscope itemtype="https://schema.org/PodcastEpisode">
           <meta itemprop="url" content="{html.escape(SITE_URL + detail_url)}" />
-          <div class="ep-row-art">
-            <img src="{html.escape(ep['image_url'])}" alt="Artwork {html.escape(ep['clean_title'])}" loading="lazy" itemprop="image" />
-          </div>
+          <a href="{html.escape(detail_url)}" class="ep-row-art">
+            <img src="{html.escape(img)}" alt="Artwork {html.escape(ep['clean_title'])}" loading="lazy" itemprop="image" />
+          </a>
           <div class="ep-row-body">
             <div class="ep-row-num">{html.escape(num_label)} &middot; <time datetime="{ep['pub_date_iso']}" itemprop="datePublished">{html.escape(ep['pub_date_nl'])}</time></div>
             <h2 class="ep-row-title"><a href="{html.escape(detail_url)}" itemprop="url name">{html.escape(ep['clean_title'])}</a></h2>
             <p class="ep-row-desc" itemprop="description">{html.escape(desc)}</p>
             <div class="ep-row-bottom">
               <span class="ep-row-meta">{html.escape(ep['duration'])}</span>
+              {cats_html}
             </div>
           </div>
         </article>"""
@@ -421,7 +496,7 @@ def render_aflevering_detail(ep: dict) -> str:
         "datePublished": ep['pub_date_iso'],
         "contentUrl": ep['audio_url'],
         "url": canonical,
-        "image": ep['image_url'],
+        "image": ep.get('best_image') or ep['image_url'],
         "partOfSeries": {
             "@type": "PodcastSeries",
             "name": "People Power",
@@ -442,10 +517,11 @@ def render_aflevering_detail(ep: dict) -> str:
         ],
     }
 
+    hero_img = ep.get('best_image') or ep['image_url']
     extra_head = (
         f'<meta property="og:title" content="{html.escape(ep["clean_title"])}" />\n'
         f'  <meta property="og:description" content="{html.escape(description)}" />\n'
-        f'  <meta property="og:image" content="{html.escape(ep["image_url"])}" />\n'
+        f'  <meta property="og:image" content="{html.escape(hero_img)}" />\n'
         f'  <meta property="og:type" content="article" />\n'
         f'  <meta property="og:url" content="{html.escape(canonical)}" />\n'
         f'  <meta property="og:locale" content="nl_NL" />\n'
@@ -488,7 +564,7 @@ def render_aflevering_detail(ep: dict) -> str:
             </audio>
           </div>
           <div class="ep-hero-wrap">
-            <img class="ep-hero-img" src="{html.escape(ep['image_url'])}" alt="Artwork bij {html.escape(ep['clean_title'])}" loading="lazy" />
+            <img class="ep-hero-img" src="{html.escape(hero_img)}" alt="Artwork bij {html.escape(ep['clean_title'])}" loading="lazy" />
           </div>
         </div>
 
@@ -600,7 +676,33 @@ def main():
 
     print(f"   Geparseerd: {len(episodes)} afleveringen")
 
-    # 3. Output-dir voorbereiden
+    # 3. Laad foto- en categorie-metadata (niet-kritisch, best effort)
+    print("-> Fetching metadata:")
+    img_data = fetch_json(IMAGES_URL, "episode-images.json")
+    custom_imgs = fetch_json(IMAGES_CUSTOM_URL, "episode-images-custom.json")
+    cat_data = fetch_json(CATEGORIES_URL, "episode-categories.json")
+    custom_cats = fetch_json(CATEGORIES_CUSTOM_URL, "episode-categories-custom.json")
+
+    # Verrijk elke episode met best_image en categorieen
+    match_count = 0
+    for ep in episodes:
+        best = best_image_for(ep, img_data, custom_imgs)
+        if best and best != ep.get('image_url'):
+            match_count += 1
+        ep['best_image'] = best
+
+        cats = best_cats_for(ep, cat_data, custom_cats)
+        ep['cats'] = cats
+        if cats:
+            ep['cats_rendered'] = "".join(
+                f'<span class="ep-cat-tag">{html.escape(cat_slug_to_name(c, cat_data))}</span>'
+                for c in cats
+            )
+        else:
+            ep['cats_rendered'] = ""
+    print(f"   {match_count} afleveringen gematcht met guest foto (van {len(episodes)})")
+
+    # 4. Output-dir voorbereiden
     DIST.mkdir(exist_ok=True)
     (DIST / "afleveringen").mkdir(exist_ok=True)
 
