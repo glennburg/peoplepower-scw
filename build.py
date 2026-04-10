@@ -50,6 +50,54 @@ MONTHS_NL = [
     "juli", "augustus", "september", "oktober", "november", "december",
 ]
 
+# Thema-classificatie op basis van keywords in titel + beschrijving.
+# Onafhankelijk van de WordPress category-data; deze themas worden puur op
+# de RSS-tekst afgeleid en dienen als SEO-landingspagina's.
+MIN_EPISODES_PER_THEMA = 5
+THEMAS = {
+    "leiderschap": {
+        "label": "Leiderschap",
+        "description": "Wat maakt een goede leider? People Power bespreekt leiderschapsstijlen, leiderschapsontwikkeling en de menselijke kant van leiding geven.",
+        "keywords": ["leiderschap", "leider", "leidinggevende", "manager", "directeur", "bestuurder", "management", "leidinggeven"],
+    },
+    "werkgeluk": {
+        "label": "Werkgeluk",
+        "description": "Gelukkige mensen presteren beter. People Power onderzoekt wat werkgeluk drijft en hoe organisaties een omgeving bouwen waarin mensen echt kunnen floreren.",
+        "keywords": ["werkgeluk", "geluk", "bevlogenheid", "plezier", "motivatie", "welzijn", "vitaliteit", "burnout", "werkdruk"],
+    },
+    "organisatieontwikkeling": {
+        "label": "Organisatieontwikkeling",
+        "description": "Hoe verander je een organisatie zonder de mensen te verliezen? Over cultuur, structuur en de kunst van het organiseren.",
+        "keywords": ["organisatieverandering", "verandering", "cultuur", "transformatie", "agile", "zelfsturing", "organisatie", "structuur"],
+    },
+    "arbeidsmarkt": {
+        "label": "Arbeidsmarkt",
+        "description": "De arbeidsmarkt verandert razendsnel. People Power volgt trends in werving, retentie, ZZP, arbeidsomstandigheden en de toekomst van werk.",
+        "keywords": ["arbeidsmarkt", "werving", "selectie", "recruitment", "retentie", "zzp", "flexibel", "ontslagen", "schaarste", "talent"],
+    },
+    "leren-en-ontwikkelen": {
+        "label": "Leren & Ontwikkelen",
+        "description": "Een leven lang leren is geen slogan maar een noodzaak. Over leerstrategieen, loopbaanontwikkeling en hoe organisaties continu leren inbedden.",
+        "keywords": ["leren", "ontwikkelen", "opleiding", "training", "loopbaan", "ontwikkeling", "skills", "competentie", "talent"],
+    },
+    "diversiteit-en-inclusie": {
+        "label": "Diversiteit & Inclusie",
+        "description": "Diverse teams presteren beter, als de cultuur inclusief is. People Power bespreekt de praktijk van diversiteitsbeleid en inclusief leiderschap.",
+        "keywords": ["diversiteit", "inclusie", "inclusief", "gelijkwaardigheid", "discriminatie", "neurodiversiteit", "vrouwen", "gender"],
+    },
+    "toekomst-van-werk": {
+        "label": "Toekomst van werk",
+        "description": "AI, hybride werken, robotisering en globalisering veranderen werk fundamenteel. Wat betekent dat voor mensen en organisaties?",
+        "keywords": ["toekomst", "ai", "automatisering", "hybride", "thuiswerken", "innovatie", "technologie", "digitalisering", "robot"],
+    },
+    "strategisch-hr": {
+        "label": "Strategisch HR",
+        "description": "HR als strategische partner van de directie. Over HR-beleid, people analytics, employer branding en de rol van HR in organisatiesucces.",
+        "keywords": ["hr", "human resources", "personeelsbeleid", "employer branding", "people analytics", "hrm", "strategisch hr"],
+    },
+}
+
+
 # Navigatie identiek aan bestaande site
 NAV_LINKS = [
     ("/", "Home"),
@@ -239,6 +287,20 @@ def cat_slug_to_name(slug: str, cat_data: dict) -> str:
         if c.get("slug") == slug:
             return c.get("name") or slug
     return slug
+
+
+def classify_episode(title: str, description: str) -> list:
+    """Return list of thema slugs dat matcht op keywords in titel + description.
+    Case-insensitive substring match. Een aflevering kan meerdere themas krijgen.
+    """
+    haystack = f"{title or ''} {description or ''}".lower()
+    matched = []
+    for slug, meta in THEMAS.items():
+        for kw in meta["keywords"]:
+            if kw.lower() in haystack:
+                matched.append(slug)
+                break
+    return matched
 
 
 def parse_episodes(xml_text: str):
@@ -580,29 +642,174 @@ def render_aflevering_detail(ep: dict) -> str:
                          current_nav="/afleveringen.html")
 
 
-def render_sitemap(episodes: list) -> str:
+def render_thema_card(ep: dict) -> str:
+    """Kleine aflevering-card voor een themapagina."""
+    num_label = f"#{ep['number']}" if ep['number'] else "Aflevering"
+    detail_url = f"/afleveringen/{ep['slug']}.html"
+    desc = ep['description_text'][:150]
+    if len(ep['description_text']) > 150:
+        desc = desc.rstrip() + "..."
+    art = ep.get('best_image') or ep['image_url']
+
+    return f"""        <article class="ep-row">
+          <a href="{html.escape(detail_url)}" class="ep-row-art">
+            <img src="{html.escape(art)}" alt="Artwork {html.escape(ep['clean_title'])}" loading="lazy" />
+          </a>
+          <div class="ep-row-body">
+            <div class="ep-row-num">{html.escape(num_label)} &middot; <time datetime="{ep['pub_date_iso']}">{html.escape(ep['pub_date_nl'])}</time></div>
+            <h3 class="ep-row-title"><a href="{html.escape(detail_url)}">{html.escape(ep['clean_title'])}</a></h3>
+            <p class="ep-row-desc">{html.escape(desc)}</p>
+            <div class="ep-row-bottom">
+              <span class="ep-row-meta">{html.escape(ep['duration'])}</span>
+            </div>
+          </div>
+        </article>"""
+
+
+def render_thema_detail(thema_slug: str, thema_meta: dict, eps: list) -> str:
+    label = thema_meta["label"]
+    description = thema_meta["description"]
+    canonical = f"{SITE_URL}/themas/{thema_slug}.html"
+
+    title = f"{label} | People Power podcast"
+    meta_desc = description[:155]
+
+    jsonld = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": f"{label} | People Power",
+        "description": description,
+        "url": canonical,
+        "isPartOf": {
+            "@type": "PodcastSeries",
+            "name": "People Power",
+            "url": SITE_URL,
+        },
+    }
+
+    extra_head = (
+        f'<meta property="og:title" content="{html.escape(label)} | People Power" />\n'
+        f'  <meta property="og:description" content="{html.escape(meta_desc)}" />\n'
+        f'  <meta property="og:type" content="website" />\n'
+        f'  <meta property="og:url" content="{html.escape(canonical)}" />\n'
+        f'  <meta property="og:locale" content="nl_NL" />\n'
+        f'  <script type="application/ld+json">\n{json.dumps(jsonld, ensure_ascii=False, indent=2)}\n  </script>'
+    )
+
+    # Sorteer op datum aflopend
+    sorted_eps = sorted(eps, key=lambda e: e['pub_date_iso'] or "", reverse=True)
+    cards = "\n".join(render_thema_card(ep) for ep in sorted_eps)
+
+    main_html = f"""    <div class="page-banner">
+      <div class="container">
+        <h1 class="page-banner-title">{html.escape(label)}</h1>
+      </div>
+    </div>
+
+    <section class="episodes-page">
+      <div class="container">
+        <nav class="breadcrumbs" aria-label="Broodkruimels">
+          <ol class="breadcrumbs-list">
+            <li><a href="/">Home</a> &rsaquo;</li>
+            <li><a href="/themas.html">Thema's</a> &rsaquo;</li>
+            <li aria-current="page">{html.escape(label)}</li>
+          </ol>
+        </nav>
+
+        <p class="thema-lead">{html.escape(description)}</p>
+        <p class="page-subtitle">{len(sorted_eps)} afleveringen over dit thema</p>
+
+        <section aria-labelledby="afleveringen-heading">
+          <h2 id="afleveringen-heading" class="visually-hidden">Afleveringen</h2>
+          <div class="ep-list">
+{cards}
+          </div>
+        </section>
+      </div>
+    </section>"""
+
+    return render_layout(title, meta_desc, canonical, main_html, extra_head,
+                         current_nav="/themas.html")
+
+
+def render_themas_overview(theme_counts: dict) -> str:
+    canonical = f"{SITE_URL}/themas.html"
+    title = "Thema's | People Power podcast over HR en leiderschap"
+    meta_desc = (
+        "Alle thema's van People Power: leiderschap, werkgeluk, HR, "
+        "organisatieontwikkeling, toekomst van werk en meer. "
+        "Ruim 600 afleveringen doorzoekbaar per thema."
+    )[:155]
+
+    # Sorteer themas op aantal afleveringen aflopend
+    items = sorted(theme_counts.items(), key=lambda kv: -kv[1])
+
+    cards_html_parts = []
+    for slug, count in items:
+        meta = THEMAS[slug]
+        label = meta["label"]
+        desc = meta["description"]
+        cards_html_parts.append(
+            f"""        <article class="thema-card">
+          <h2 class="thema-card-title"><a href="/themas/{slug}.html">{html.escape(label)}</a></h2>
+          <p class="thema-card-desc">{html.escape(desc)}</p>
+          <div class="thema-card-meta">{count} afleveringen</div>
+          <a href="/themas/{slug}.html" class="link-more">Bekijk afleveringen</a>
+        </article>"""
+        )
+    cards_html = "\n".join(cards_html_parts)
+
+    main_html = f"""    <div class="page-banner">
+      <div class="container">
+        <h1 class="page-banner-title">Thema's</h1>
+      </div>
+    </div>
+
+    <section class="themas-page">
+      <div class="container">
+        <p class="themas-intro">
+          People Power bespreekt al ruim 10 jaar de grote thema's in werk en organisatie.
+          Blader per thema door meer dan 600 afleveringen over leiderschap, werkgeluk,
+          HR en de toekomst van werk.
+        </p>
+
+        <div class="thema-grid">
+{cards_html}
+        </div>
+      </div>
+    </section>"""
+
+    return render_layout(title, meta_desc, canonical, main_html,
+                         current_nav="/themas.html")
+
+
+def render_sitemap(episodes: list, theme_slugs: list) -> str:
     today = datetime.utcnow().strftime("%Y-%m-%d")
+    # (path, priority, lastmod, changefreq)
     urls = [
-        ("/", "1.0", today),
-        ("/afleveringen.html", "0.9", today),
-        ("/themas.html", "0.8", today),
-        ("/over.html", "0.7", today),
-        ("/partner.html", "0.7", today),
-        ("/contact.html", "0.6", today),
+        ("/", "1.0", today, "weekly"),
+        ("/afleveringen.html", "0.9", today, "weekly"),
+        ("/themas.html", "0.8", today, "weekly"),
+        ("/over.html", "0.7", today, "monthly"),
+        ("/partner.html", "0.7", today, "monthly"),
+        ("/contact.html", "0.6", today, "monthly"),
     ]
     total_pages = (len(episodes) + EPISODES_PER_PAGE - 1) // EPISODES_PER_PAGE
     for p in range(2, total_pages + 1):
-        urls.append((f"/afleveringen-{p}.html", "0.7", today))
+        urls.append((f"/afleveringen-{p}.html", "0.7", today, "weekly"))
+    for slug in theme_slugs:
+        urls.append((f"/themas/{slug}.html", "0.7", today, "weekly"))
     for ep in episodes:
         urls.append((f"/afleveringen/{ep['slug']}.html", "0.5",
-                     ep['pub_date_iso'] or today))
+                     ep['pub_date_iso'] or today, "monthly"))
 
     url_blocks = []
-    for path, prio, lastmod in urls:
+    for path, prio, lastmod, freq in urls:
         url_blocks.append(
             f"  <url>\n"
             f"    <loc>{SITE_URL}{path}</loc>\n"
             f"    <lastmod>{lastmod}</lastmod>\n"
+            f"    <changefreq>{freq}</changefreq>\n"
             f"    <priority>{prio}</priority>\n"
             f"  </url>"
         )
@@ -702,18 +909,46 @@ def main():
             ep['cats_rendered'] = ""
     print(f"   {match_count} afleveringen gematcht met guest foto (van {len(episodes)})")
 
-    # 4. Output-dir voorbereiden
+    # 4. Classificeer elke aflevering op keyword-themas
+    from collections import defaultdict
+    themas_episodes = defaultdict(list)
+    for ep in episodes:
+        ep_themas = classify_episode(ep['clean_title'], ep['description_text'])
+        ep['themas'] = ep_themas
+        for t in ep_themas:
+            themas_episodes[t].append(ep)
+
+    # Thema's met genoeg afleveringen krijgen een eigen pagina
+    active_themas = {
+        slug: eps for slug, eps in themas_episodes.items()
+        if len(eps) >= MIN_EPISODES_PER_THEMA
+    }
+    skipped_themas = {
+        slug: len(themas_episodes.get(slug, [])) for slug in THEMAS
+        if slug not in active_themas
+    }
+
+    print(f"   {len(active_themas)} thema's actief (>= {MIN_EPISODES_PER_THEMA} afleveringen):")
+    for slug, eps in sorted(active_themas.items(), key=lambda kv: -len(kv[1])):
+        print(f"     {slug:30s} {len(eps):4d} afleveringen")
+    if skipped_themas:
+        print("   Onder drempel (geen pagina gegenereerd):")
+        for slug, cnt in skipped_themas.items():
+            print(f"     {slug:30s} {cnt:4d} afleveringen")
+
+    # 5. Output-dir voorbereiden
     DIST.mkdir(exist_ok=True)
     (DIST / "afleveringen").mkdir(exist_ok=True)
+    (DIST / "themas").mkdir(exist_ok=True)
 
-    # 4. Lijstpagina's met paginering
+    # 6. Lijstpagina's met paginering
     total_pages = (len(episodes) + EPISODES_PER_PAGE - 1) // EPISODES_PER_PAGE
     for p in range(1, total_pages + 1):
         filename, html_out = render_afleveringen_list(episodes, p, total_pages)
         (DIST / filename).write_text(html_out, encoding="utf-8")
     print(f"   Gegenereerd: {total_pages} lijstpagina(s)")
 
-    # 5. Detailpagina's
+    # 7. Detailpagina's
     generated_details = 0
     for ep in episodes:
         detail_html = render_aflevering_detail(ep)
@@ -722,8 +957,21 @@ def main():
         generated_details += 1
     print(f"   Gegenereerd: {generated_details} detailpagina's")
 
-    # 6. Sitemap
-    (DIST / "sitemap.xml").write_text(render_sitemap(episodes), encoding="utf-8")
+    # 8a. Thema-detailpagina's
+    for slug, eps in active_themas.items():
+        html_out = render_thema_detail(slug, THEMAS[slug], eps)
+        (DIST / "themas" / f"{slug}.html").write_text(html_out, encoding="utf-8")
+    print(f"   Gegenereerd: {len(active_themas)} thema-detailpagina(s)")
+
+    # 8b. Thema-overzichtspagina (themas.html)
+    theme_counts = {slug: len(eps) for slug, eps in active_themas.items()}
+    (DIST / "themas.html").write_text(
+        render_themas_overview(theme_counts), encoding="utf-8")
+    print("   Gegenereerd: themas.html (overzicht)")
+
+    # 7. Sitemap
+    (DIST / "sitemap.xml").write_text(
+        render_sitemap(episodes, list(active_themas.keys())), encoding="utf-8")
     print("   Gegenereerd: sitemap.xml")
 
     # 7. robots.txt
