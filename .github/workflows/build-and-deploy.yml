@@ -1,0 +1,64 @@
+name: Build en deploy People Power website
+
+on:
+  schedule:
+    # Elke maandag om 16:00 UTC (= 17:00 CET / 18:00 CEST)
+    - cron: '0 16 * * 1'
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Genereer HTML en upload naar S3
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Code ophalen
+        uses: actions/checkout@v4
+
+      - name: Python instellen
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Dependencies installeren
+        run: pip install -r requirements.txt
+
+      - name: HTML genereren
+        run: python build.py
+        env:
+          SITE_URL: https://peoplepower.radio
+
+      - name: AWS CLI configureren voor Scaleway
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.SCW_ACCESS_KEY }}
+          aws configure set aws_secret_access_key ${{ secrets.SCW_SECRET_KEY }}
+          aws configure set default.region ${{ secrets.SCW_REGION }}
+
+      - name: Uploaden naar Scaleway S3
+        run: |
+          aws s3 sync ./dist s3://${{ secrets.SCW_BUCKET }} \
+            --endpoint-url https://s3.${{ secrets.SCW_REGION }}.scw.cloud \
+            --delete \
+            --cache-control "max-age=3600" \
+            --content-type "text/html; charset=utf-8" \
+            --exclude "*.py" \
+            --exclude "*.sh" \
+            --exclude "*.yml" \
+            --exclude ".git/*"
+
+      - name: Sitemap melden aan Google
+        run: |
+          curl -s "https://www.google.com/ping?sitemap=https://peoplepower.radio/sitemap.xml" \
+            -o /dev/null -w "Google ping: HTTP %{http_code}\n"
+
+      - name: Samenvatting tonen
+        run: |
+          echo "## Deploy geslaagd" >> $GITHUB_STEP_SUMMARY
+          echo "Gedraaid op: $(date '+%A %d %B %Y om %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "Gegenereerde bestanden:" >> $GITHUB_STEP_SUMMARY
+          find ./dist -name "*.html" | wc -l | xargs -I{} echo "- {} HTML-pagina's" >> $GITHUB_STEP_SUMMARY

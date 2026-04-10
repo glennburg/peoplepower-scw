@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thema's | People Power</title>
+  <meta name="description" content="Ontdek alle thema's van People Power: werkgeluk, leiderschap, leren &amp; ontwikkeling, strategisch HR en meer. Vind afleveringen op jouw thema." />
+  <link rel="canonical" href="https://peoplepower.radio/themas.html" />
+  <link rel="icon" type="image/png" href="/logo-pp-orange-favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YGXLQLH4FG"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-YGXLQLH4FG');
+  </script>
+</head>
+<body>
+
+  <a href="#main-content" class="skip-link">Sla navigatie over</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="brand">
+        <img src="/logo-pp-full.png" alt="People Power, terug naar de homepage" class="brand-logo-full" />
+      </a>
+      <nav class="main-nav" aria-label="Hoofdnavigatie">
+        <a href="/">Home</a>
+        <a href="/afleveringen.html">Afleveringen</a>
+        <a href="/themas.html" class="nav-active">Thema's</a>
+        <a href="/over.html">Over</a>
+        <a href="/partner.html">Vaker te gast</a>
+        <a href="/contact.html">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="page-banner">
+    <div class="container">
+      <h1 class="page-banner-title">Thema's</h1>
+    </div>
+  </div>
+
+  <section class="themas-page" id="main-content">
+    <div class="container">
+      <p class="themas-intro">People Power behandelt de grote thema's in werk en organisatie. Verken hier de onderwerpen waar we al ruim tien jaar over praten.</p>
+
+      <div id="themas-content" aria-live="polite" aria-atomic="true" aria-busy="true">
+        <div class="episode-loading">Thema's laden...</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="/logo-pp-full.png" alt="People Power, terug naar de homepage" class="footer-logo-full" />
+        <div>
+          <div class="footer-tag">Een programma op New Business Radio</div>
+        </div>
+      </div>
+      <div class="footer-links">
+        <a href="https://open.spotify.com/show/4X2GIU0blBAFkYzVbqTzpl" target="_blank" rel="noopener">Spotify</a>
+        <a href="https://podcasts.apple.com/nl/podcast/new-business-radio-work/id1143830823" target="_blank" rel="noopener">Apple Podcasts</a>
+        <a href="/contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      &copy; 2026 People Power &middot; glenn@people-power.nl
+    </div>
+  </footer>
+
+  <script src="/config.js"></script>
+  <script>
+    const API_URL = window.PEOPLEPOWER_API_URL || "/api/episodes";
+    const defaultArt = "/podcast-artwork-square.png";
+
+    let allEpisodes = [];
+    let imageData = {};
+    let customImages = {};
+    let categoryData = {};
+    let customCategories = {};
+
+    function escapeHtml(s) {
+      return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function getBestImage(ep) {
+      if (ep.number && customImages[ep.number]) return customImages[ep.number];
+      if (ep.number && imageData.byNumber && imageData.byNumber[ep.number]) return imageData.byNumber[ep.number];
+      if (imageData.byTitle) {
+        const norm = ep.title.toLowerCase().replace(/\s+/g, " ").trim();
+        if (imageData.byTitle[norm]) return imageData.byTitle[norm];
+      }
+      if (ep.imageUrl) return ep.imageUrl;
+      return defaultArt;
+    }
+
+    function getCatsForEpisode(ep) {
+      if (ep.number && customCategories[ep.number]) return customCategories[ep.number];
+      if (ep.number && categoryData.byNumber && categoryData.byNumber[ep.number]) return categoryData.byNumber[ep.number];
+      if (categoryData.byTitle) {
+        const norm = ep.title.toLowerCase().replace(/\s+/g, " ").trim();
+        if (categoryData.byTitle[norm]) return categoryData.byTitle[norm];
+      }
+      return [];
+    }
+
+    function catSlugToName(slug) {
+      const cats = categoryData.categories || [];
+      const c = cats.find(x => x.slug === slug);
+      return c ? c.name : slug;
+    }
+
+    function renderCard(ep, globalIdx) {
+      const art = escapeHtml(getBestImage(ep));
+      return '<article class="ep-row" data-idx="' + globalIdx + '">' +
+        '<div class="ep-row-art">' +
+          '<img src="' + art + '" alt="" loading="lazy" />' +
+        '</div>' +
+        '<div class="ep-row-body">' +
+          '<div class="ep-row-num">' + (ep.number ? "#" + ep.number : "") + ' \u00b7 ' + (ep.pubDateFormatted || "") + '</div>' +
+          '<h3 class="ep-row-title">' + escapeHtml(ep.title) + '</h3>' +
+          '<p class="ep-row-desc">' + escapeHtml(ep.description) + '</p>' +
+          '<div class="ep-row-bottom">' +
+            '<span class="ep-row-meta">' + (ep.duration || "") + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</article>';
+    }
+
+    function renderThemas() {
+      const cats = categoryData.categories || [];
+      // Build index: slug -> episodes (in order, allEpisodes is newest first)
+      const bySlug = {};
+      cats.forEach(c => { bySlug[c.slug] = []; });
+
+      allEpisodes.forEach((ep, idx) => {
+        const epCats = getCatsForEpisode(ep);
+        epCats.forEach(slug => {
+          if (bySlug[slug]) bySlug[slug].push({ ep, idx });
+        });
+      });
+
+      // Sort categories by most recent episode (lowest index = newest),
+      // hide empty ones
+      const sortedCats = cats
+        .map(c => ({
+          ...c,
+          count: bySlug[c.slug].length,
+          latestIdx: bySlug[c.slug].length > 0 ? bySlug[c.slug][0].idx : Infinity,
+        }))
+        .filter(c => c.count > 0)
+        .sort((a, b) => a.latestIdx - b.latestIdx);
+
+      const container = document.getElementById("themas-content");
+      container.innerHTML = sortedCats.map(c => {
+        const list = bySlug[c.slug].slice(0, 2);
+        const cards = list.map(item => renderCard(item.ep, item.idx)).join("");
+        return '<section class="thema-section">' +
+          '<div class="thema-head">' +
+            '<h2 class="thema-title">' + escapeHtml(c.name) + '</h2>' +
+            '<span class="thema-count">' + c.count + ' afleveringen</span>' +
+          '</div>' +
+          '<div class="ep-list ep-list-2col">' + cards + '</div>' +
+          '<div class="thema-more">' +
+            '<a href="/afleveringen.html?thema=' + encodeURIComponent(c.slug) + '" class="btn-more">Meer ' + escapeHtml(c.name) + '</a>' +
+          '</div>' +
+        '</section>';
+      }).join("");
+
+      // Click handlers for cards
+      container.querySelectorAll(".ep-row").forEach(card => {
+        card.addEventListener("click", () => {
+          const idx = parseInt(card.dataset.idx, 10);
+          const ep = allEpisodes[idx];
+          window.location.href = "/aflevering.html?idx=" + idx + "&id=" + encodeURIComponent(ep.id);
+        });
+      });
+    }
+
+    function fetchWithTimeout(url, ms) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), ms);
+      return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
+    }
+
+    function showLoadError() {
+      document.getElementById("themas-content").innerHTML =
+        '<div class="load-error">' +
+          '<h2>Afleveringen kunnen op dit moment niet geladen worden</h2>' +
+          '<p>Luister via Spotify of Apple Podcasts.</p>' +
+          '<div class="load-error-btns">' +
+            '<a href="https://open.spotify.com/show/4X2GIU0blBAFkYzVbqTzpl" target="_blank" rel="noopener" class="btn-platform btn-spotify">Luister op Spotify</a>' +
+            '<a href="https://podcasts.apple.com/nl/podcast/new-business-radio-work/id1143830823" target="_blank" rel="noopener" class="btn-platform btn-apple">Luister op Apple Podcasts</a>' +
+          '</div>' +
+        '</div>';
+    }
+
+    async function init() {
+      try {
+        const res = await fetchWithTimeout(API_URL, 8000);
+        if (!res.ok) throw new Error("Kon afleveringen niet laden");
+        const data = await res.json();
+        allEpisodes = data.episodes || [];
+        if (!allEpisodes.length) throw new Error("Geen afleveringen ontvangen");
+
+        const [imgRes, cusRes, catRes, cusCatRes] = await Promise.all([
+          fetch("/episode-images.json").catch(() => null),
+          fetch("/episode-images-custom.json").catch(() => null),
+          fetch("/episode-categories.json").catch(() => null),
+          fetch("/episode-categories-custom.json").catch(() => null),
+        ]);
+        if (imgRes && imgRes.ok) imageData = await imgRes.json();
+        if (cusRes && cusRes.ok) customImages = await cusRes.json();
+        if (catRes && catRes.ok) categoryData = await catRes.json();
+        if (cusCatRes && cusCatRes.ok) customCategories = await cusCatRes.json();
+        renderThemas();
+        document.getElementById("themas-content").setAttribute("aria-busy", "false");
+      } catch (err) {
+        console.error("Load error:", err);
+        showLoadError();
+        document.getElementById("themas-content").setAttribute("aria-busy", "false");
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

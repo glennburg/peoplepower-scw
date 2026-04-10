@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>People Power | Radio & Podcast over werk</title>
+  <meta name="description" content="People Power is hét radioprogramma en podcast over HR, leiderschap en werkgeluk. Elke maandag live op New Business Radio, 14–16 uur. 600+ afleveringen, 500.000+ luisterbeurten." />
+  <link rel="canonical" href="https://peoplepower.radio/" />
+  <link rel="icon" type="image/png" href="/logo-pp-orange-favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YGXLQLH4FG"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-YGXLQLH4FG');
+  </script>
+</head>
+<body>
+
+  <a href="#main-content" class="skip-link">Sla navigatie over</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="brand">
+        <img src="/logo-pp-full.png" alt="People Power, terug naar de homepage" class="brand-logo-full" />
+      </a>
+      <nav class="main-nav" aria-label="Hoofdnavigatie">
+        <a href="/">Home</a>
+        <a href="/afleveringen.html">Afleveringen</a>
+        <a href="/themas.html">Thema's</a>
+        <a href="/over.html">Over</a>
+        <a href="/partner.html">Vaker te gast</a>
+        <a href="/contact.html">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" id="main-content">
+    <div class="container hero-inner">
+      <div class="hero-text">
+        <p class="eyebrow">Radio &amp; podcast · elke maandag live</p>
+        <h1>Werk je aan een betere organisatie? Elke week nieuwe inzichten van de mensen die werk vormgeven.</h1>
+        <p>Elke maandag live op New Business Radio en als podcast. Ruim 10 jaar, 600+ afleveringen, een half miljoen luisterbeurten.</p>
+        <div class="hero-ctas">
+          <a href="https://open.spotify.com/show/4X2GIU0blBAFkYzVbqTzpl" target="_blank" rel="noopener noreferrer" class="btn-primary">Luister op Spotify</a>
+          <a href="/afleveringen.html" class="btn-secondary">Bekijk alle afleveringen</a>
+        </div>
+      </div>
+      <div class="hero-image">
+        <img src="/podcast-artwork-square.png" alt="Artwork van de People Power podcast, radio en podcast over werk" />
+      </div>
+    </div>
+  </section>
+
+  <section class="player-bar" id="player">
+    <div class="container player-inner">
+      <button class="player-btn" id="player-btn" aria-label="Speel af">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="player-info">
+        <div class="player-label">Nieuwste aflevering</div>
+        <div class="player-title" id="player-title">Bezig met laden…</div>
+      </div>
+      <div class="player-meta" id="player-meta"></div>
+      <audio id="audio" preload="none"></audio>
+    </div>
+  </section>
+
+  <section class="episodes" id="afleveringen">
+    <div class="container">
+      <div class="section-head">
+        <h2>Recente afleveringen</h2>
+        <a href="/afleveringen.html" class="link-more">Alles bekijken</a>
+      </div>
+      <div class="ep-list" id="episode-grid">
+        <div class="episode-loading">Afleveringen laden…</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="container stats-inner">
+      <div class="stat"><div class="stat-num">600+</div><div class="stat-label">Afleveringen</div></div>
+      <div class="stat"><div class="stat-num">500K+</div><div class="stat-label">luisteractiviteiten</div></div>
+      <div class="stat"><div class="stat-num">Ruim 10 jaar</div><div class="stat-label">Onafgebroken op de radio</div></div>
+    </div>
+  </section>
+
+  <section class="about" id="over">
+    <div class="container about-inner">
+      <h2>Over People Power</h2>
+      <p>Elke maandag van 14 tot 16 uur live op <a href="https://newbusinessradio.nl" target="_blank" rel="noopener">New Business Radio</a> brengt People Power je praktijkvoorbeelden, onderzoeken en modellen zodat jij mensgericht kunt organiseren. Hierdoor gaat de organisatie beter presteren en worden mensen gelukkiger.</p>
+      <p>Heb jij een tip? Een mooi praktijkverhaal, een interessant onderzoek of iemand om te interviewen in de studio van People Power? Laat het ons weten via <a href="mailto:glenn@people-power.nl">glenn@people-power.nl</a>.</p>
+    </div>
+  </section>
+
+  <section class="guest-cta" id="word-gast">
+    <div class="container guest-cta-inner">
+      <h2>Wil jij te gast zijn?</h2>
+      <p>People Power ontvangt elke week gasten in de studio in Hilversum. Heb jij een praktijkverhaal, een nieuw onderzoek of een interessant perspectief op werk? Stuur een mail en dan kijken we samen of er een goede match is.</p>
+      <div class="guest-cta-buttons">
+        <a href="mailto:glenn@people-power.nl?subject=Gast%20bij%20People%20Power&amp;body=Hoi%20Glenn%2C%20ik%20wil%20me%20graag%20voorstellen%20als%20mogelijke%20gast%20voor%20People%20Power." class="btn-primary">Stel jezelf voor</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="partners" id="partners">
+    <div class="container">
+      <div class="section-head">
+        <h2>Wie maken People Power mee?</h2>
+      </div>
+      <p class="partners-intro">People Power wordt mogelijk gemaakt door partners die geloven in de kracht van mensen in organisaties.</p>
+      <div class="partner-grid">
+        <div class="partner-card">
+          <p><strong><a href="https://www.uu.nl/onderzoek/instituties-voor-open-samenlevingen/fow" target="_blank" rel="noopener">Universiteit Utrecht: Future of Work</a></strong>. Samen met de Future of Work Hub maken we een reeks programma's over de toekomst van werk. Wetenschappers, organisaties en beleidsmakers beantwoorden samen maatschappelijke vragen over werk.</p>
+        </div>
+      </div>
+
+      <div class="become-partner">
+        <h3 class="become-partner-title">Vaker te gast bij People Power</h3>
+        <p class="become-partner-intro">Sluit je aan als vaste gast of partner en kom regelmatig langs in de studio. Als vaste gast ben je twee keer per jaar te horen in het magazine-format. Als partner maken we elke maand samen een volledig programma.</p>
+        <a href="/partner.html" class="link-more">Bekijk de mogelijkheden</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer" id="contact">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="/logo-pp-full.png" alt="People Power, terug naar de homepage" class="footer-logo-full" />
+        <div>
+          <div class="footer-tag">Een programma op New Business Radio</div>
+        </div>
+      </div>
+      <div class="footer-links">
+        <a href="https://open.spotify.com/show/4X2GIU0blBAFkYzVbqTzpl" target="_blank" rel="noopener">Spotify</a>
+        <a href="https://podcasts.apple.com/nl/podcast/new-business-radio-work/id1143830823" target="_blank" rel="noopener">Apple Podcasts</a>
+        <a href="/contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      © 2026 People Power · glenn@people-power.nl
+    </div>
+  </footer>
+
+  <script src="/config.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

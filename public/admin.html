@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin | People Power</title>
+  <link rel="icon" type="image/png" href="/logo-pp-orange-favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --amber: #DD9934; --ink: #111; --muted: #6B6A66; --line: #E8E6DE; --bg-soft: #FAF8F2; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background: var(--bg-soft); color: var(--ink); }
+    .admin-header { background: var(--ink); color: white; padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
+    .admin-header img { height: 24px; filter: invert(1); }
+    .admin-header span { font-size: 13px; color: #999; }
+    .admin-wrap { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+    h1 { font-size: 24px; margin: 0 0 8px; }
+    .subtitle { color: var(--muted); font-size: 14px; margin: 0 0 32px; }
+
+    .login-box { max-width: 400px; margin: 80px auto; background: white; border: 1px solid var(--line); border-radius: 12px; padding: 32px; }
+    .login-box h2 { margin: 0 0 16px; font-size: 20px; }
+    .login-box input { width: 100%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
+    .login-box button { width: 100%; padding: 10px; background: var(--amber); border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+
+    .search-bar { display: flex; gap: 12px; margin-bottom: 24px; }
+    .search-bar input { flex: 1; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; }
+    .search-bar select { padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; background: white; }
+    .ep-admin-list { display: flex; flex-direction: column; gap: 8px; }
+    .ep-admin-row { display: flex; align-items: center; gap: 16px; background: white; border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+    .ep-admin-row.has-photo { border-left: 3px solid #22c55e; }
+    .ep-admin-row.no-photo { border-left: 3px solid #ddd; }
+    .ep-admin-thumb { width: 64px; height: 64px; border-radius: 6px; object-fit: cover; background: #eee; flex-shrink: 0; }
+    .ep-admin-thumb-empty { width: 64px; height: 64px; border-radius: 6px; background: #f0f0f0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 24px; }
+    .ep-admin-info { flex: 1; min-width: 0; }
+    .ep-admin-num { font-size: 12px; color: var(--muted); }
+    .ep-admin-title { font-size: 14px; font-weight: 600; margin: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ep-admin-cats { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+    .cat-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #f0f0f0; color: var(--muted); font-weight: 500; }
+    .cat-tag.has { background: #FEF3C7; color: #92400E; }
+    .ep-admin-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .btn-sm { padding: 6px 14px; border: 1px solid var(--line); border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; background: white; white-space: nowrap; }
+    .btn-sm:hover { border-color: var(--amber); }
+    .btn-sm.primary { background: var(--amber); border-color: var(--amber); }
+
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
+    .modal-bg.open { display: flex; }
+    .modal { background: white; border-radius: 12px; padding: 28px; max-width: 540px; width: 90%; max-height: 90vh; overflow-y: auto; }
+    .modal h3 { margin: 0 0 20px; font-size: 18px; }
+    .modal label { font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; color: var(--muted); }
+    .modal input[type="url"], .modal input[type="text"] { width: 100%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
+    .modal-preview { width: 100%; max-height: 180px; object-fit: contain; border-radius: 8px; background: #f5f5f5; margin-bottom: 16px; display: none; }
+    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .modal-btns button { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid var(--line); }
+    .modal-btns .save { background: var(--amber); border-color: var(--amber); }
+
+    .cat-select-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+    .cat-chip { padding: 6px 14px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.1s; user-select: none; }
+    .cat-chip:hover { border-color: var(--amber); }
+    .cat-chip.selected { background: var(--amber); border-color: var(--amber); color: var(--ink); font-weight: 600; }
+
+    .stats-bar { display: flex; gap: 24px; margin-bottom: 24px; flex-wrap: wrap; }
+    .stat-pill { background: white; border: 1px solid var(--line); border-radius: 8px; padding: 8px 16px; font-size: 13px; }
+    .stat-pill strong { font-weight: 700; }
+
+    .save-banner { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: white; padding: 14px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; z-index: 500; display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .save-banner.visible { display: flex; align-items: center; gap: 12px; }
+    .save-banner button { background: var(--amber); border: none; padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+    .section-divider { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; margin: 8px 0; padding: 4px 0; border-bottom: 1px solid var(--line); }
+  </style>
+</head>
+<body>
+
+  <div class="admin-header">
+    <img src="/logo-pp-full.png" alt="People Power" />
+    <span>Beheer</span>
+  </div>
+
+  <div id="login-screen" class="login-box">
+    <h2>Inloggen</h2>
+    <input type="password" id="login-pw" placeholder="Wachtwoord" />
+    <button onclick="doLogin()">Inloggen</button>
+  </div>
+
+  <div id="admin-panel" class="admin-wrap" style="display:none;">
+    <h1>Afleveringen beheren</h1>
+    <p class="subtitle">Beheer foto's en categorieën per aflevering.</p>
+
+    <div class="stats-bar">
+      <div class="stat-pill"><strong id="stat-total">0</strong> afleveringen</div>
+      <div class="stat-pill"><strong id="stat-photos">0</strong> met foto</div>
+      <div class="stat-pill"><strong id="stat-cats">0</strong> met categorie</div>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="search" placeholder="Zoek op titel of nummer..." oninput="filterList()" />
+      <select id="filter-cat" onchange="filterList()">
+        <option value="">Alle categorieën</option>
+      </select>
+    </div>
+
+    <div class="ep-admin-list" id="admin-list"></div>
+  </div>
+
+  <!-- Edit modal -->
+  <div class="modal-bg" id="modal">
+    <div class="modal">
+      <h3 id="modal-title">Bewerken</h3>
+
+      <label>Afbeelding URL</label>
+      <input type="url" id="modal-url" placeholder="https://..." oninput="previewImage()" />
+      <img class="modal-preview" id="modal-preview" />
+      <p style="font-size:12px;color:var(--muted);margin:0 0 20px;">Plak een URL naar een afbeelding. Tip: upload naar <a href="https://imgbb.com" target="_blank">imgbb.com</a> of je eigen server.</p>
+
+      <label>Categorieën</label>
+      <div class="cat-select-grid" id="modal-cats"></div>
+
+      <div class="modal-btns">
+        <button onclick="closeModal()">Annuleren</button>
+        <button class="save" onclick="saveEpisode()">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="save-banner" id="save-banner">
+    Wijzigingen opslaan?
+    <button onclick="downloadAll()">Download JSON bestanden</button>
+  </div>
+
+  <script src="/config.js"></script>
+  <script>
+    const API_URL = window.PEOPLEPOWER_API_URL || "/api/episodes";
+    const TOKEN_KEY = "pp_admin_token";
+
+    let episodes = [];
+    let imageData = {};
+    let customImages = {};
+    let categoryData = {};
+    let customCategories = {};
+    let allCategories = [];
+    let editingEp = null;
+    let hasChanges = false;
+
+    function doLogin() {
+      const pw = document.getElementById("login-pw").value;
+      if (pw === "peoplepower2026") {
+        sessionStorage.setItem(TOKEN_KEY, pw);
+        showAdmin();
+      } else {
+        alert("Onjuist wachtwoord");
+      }
+    }
+
+    function showAdmin() {
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("admin-panel").style.display = "block";
+      loadData();
+    }
+
+    async function loadData() {
+      const [epsRes, imgRes, cusRes, catRes, cusCatRes] = await Promise.all([
+        fetch(API_URL),
+        fetch("/episode-images.json").catch(() => null),
+        fetch("/episode-images-custom.json").catch(() => null),
+        fetch("/episode-categories.json").catch(() => null),
+        fetch("/episode-categories-custom.json").catch(() => null),
+      ]);
+
+      episodes = (await epsRes.json()).episodes || [];
+      if (imgRes && imgRes.ok) imageData = await imgRes.json();
+      if (cusRes && cusRes.ok) customImages = await cusRes.json();
+      if (catRes && catRes.ok) categoryData = await catRes.json();
+      if (cusCatRes && cusCatRes.ok) customCategories = await cusCatRes.json();
+
+      allCategories = categoryData.categories || [];
+
+      // Populate filter dropdown
+      const sel = document.getElementById("filter-cat");
+      allCategories.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.slug;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+      });
+
+      renderList();
+    }
+
+    function getImageForEpisode(ep) {
+      if (ep.number && customImages[ep.number]) return customImages[ep.number];
+      if (ep.number && imageData.byNumber && imageData.byNumber[ep.number]) return imageData.byNumber[ep.number];
+      if (imageData.byTitle) {
+        const norm = ep.title.toLowerCase().replace(/\s+/g, ' ').trim();
+        if (imageData.byTitle[norm]) return imageData.byTitle[norm];
+      }
+      if (ep.imageUrl) return ep.imageUrl;
+      return "";
+    }
+
+    function getCatsForEpisode(ep) {
+      // Custom first
+      if (ep.number && customCategories[ep.number]) return customCategories[ep.number];
+      // WordPress by number
+      if (ep.number && categoryData.byNumber && categoryData.byNumber[ep.number]) return categoryData.byNumber[ep.number];
+      // By title
+      if (categoryData.byTitle) {
+        const norm = ep.title.toLowerCase().replace(/\s+/g, ' ').trim();
+        if (categoryData.byTitle[norm]) return categoryData.byTitle[norm];
+      }
+      return [];
+    }
+
+    function catSlugToName(slug) {
+      const c = allCategories.find(x => x.slug === slug);
+      return c ? c.name : slug;
+    }
+
+    function renderList() {
+      const list = document.getElementById("admin-list");
+      let withPhoto = 0;
+      let withCat = 0;
+
+      list.innerHTML = episodes.map((ep, i) => {
+        const img = getImageForEpisode(ep);
+        const cats = getCatsForEpisode(ep);
+        if (img) withPhoto++;
+        if (cats.length) withCat++;
+        const cls = img ? "has-photo" : "no-photo";
+        const thumb = img
+          ? '<img class="ep-admin-thumb" src="' + escapeHtml(img) + '" loading="lazy" />'
+          : '<div class="ep-admin-thumb-empty">?</div>';
+
+        const catHtml = cats.length
+          ? cats.map(s => '<span class="cat-tag has">' + escapeHtml(catSlugToName(s)) + '</span>').join("")
+          : '<span class="cat-tag">Geen categorie</span>';
+
+        return '<div class="ep-admin-row ' + cls + '" data-idx="' + i + '" data-cats="' + cats.join(",") + '">' +
+          thumb +
+          '<div class="ep-admin-info">' +
+            '<div class="ep-admin-num">' + (ep.number ? "#" + ep.number : "") + ' &middot; ' + (ep.pubDateFormatted || "") + '</div>' +
+            '<div class="ep-admin-title">' + escapeHtml(ep.title) + '</div>' +
+            '<div class="ep-admin-cats">' + catHtml + '</div>' +
+          '</div>' +
+          '<div class="ep-admin-actions">' +
+            '<button class="btn-sm" onclick="openModal(' + i + ')">Bewerken</button>' +
+          '</div>' +
+        '</div>';
+      }).join("");
+
+      document.getElementById("stat-total").textContent = episodes.length;
+      document.getElementById("stat-photos").textContent = withPhoto;
+      document.getElementById("stat-cats").textContent = withCat;
+    }
+
+    function filterList() {
+      const q = document.getElementById("search").value.toLowerCase();
+      const catFilter = document.getElementById("filter-cat").value;
+      document.querySelectorAll(".ep-admin-row").forEach(row => {
+        const idx = parseInt(row.dataset.idx);
+        const ep = episodes[idx];
+        const text = ((ep.number || "") + " " + ep.title).toLowerCase();
+        const rowCats = (row.dataset.cats || "").split(",");
+        const matchText = !q || text.includes(q);
+        const matchCat = !catFilter || rowCats.includes(catFilter);
+        row.style.display = (matchText && matchCat) ? "" : "none";
+      });
+    }
+
+    function openModal(idx) {
+      editingEp = episodes[idx];
+      const img = getImageForEpisode(editingEp);
+      const cats = getCatsForEpisode(editingEp);
+
+      document.getElementById("modal-title").textContent = (editingEp.number ? "#" + editingEp.number + " " : "") + editingEp.title;
+      document.getElementById("modal-url").value = img;
+      previewImage();
+
+      // Render category chips
+      const grid = document.getElementById("modal-cats");
+      grid.innerHTML = allCategories.map(c => {
+        const sel = cats.includes(c.slug) ? " selected" : "";
+        return '<div class="cat-chip' + sel + '" data-slug="' + c.slug + '" onclick="toggleCat(this)">' + escapeHtml(c.name) + '</div>';
+      }).join("");
+
+      document.getElementById("modal").classList.add("open");
+    }
+
+    function toggleCat(el) {
+      el.classList.toggle("selected");
+    }
+
+    function closeModal() {
+      document.getElementById("modal").classList.remove("open");
+      editingEp = null;
+    }
+
+    function previewImage() {
+      const url = document.getElementById("modal-url").value.trim();
+      const preview = document.getElementById("modal-preview");
+      if (url) {
+        preview.src = url;
+        preview.style.display = "block";
+        preview.onerror = () => { preview.style.display = "none"; };
+      } else {
+        preview.style.display = "none";
+      }
+    }
+
+    function saveEpisode() {
+      if (!editingEp || !editingEp.number) {
+        alert("Deze aflevering heeft geen nummer");
+        return;
+      }
+      const num = editingEp.number;
+
+      // Save image
+      const url = document.getElementById("modal-url").value.trim();
+      if (url) customImages[num] = url;
+
+      // Save categories
+      const selected = [];
+      document.querySelectorAll("#modal-cats .cat-chip.selected").forEach(el => {
+        selected.push(el.dataset.slug);
+      });
+      customCategories[num] = selected;
+
+      hasChanges = true;
+      document.getElementById("save-banner").classList.add("visible");
+      closeModal();
+      renderList();
+    }
+
+    function downloadAll() {
+      // Download images JSON
+      const imgBlob = new Blob([JSON.stringify(customImages, null, 2)], {type: "application/json"});
+      const a1 = document.createElement("a");
+      a1.href = URL.createObjectURL(imgBlob);
+      a1.download = "episode-images-custom.json";
+      a1.click();
+
+      // Download categories JSON
+      setTimeout(() => {
+        const catBlob = new Blob([JSON.stringify(customCategories, null, 2)], {type: "application/json"});
+        const a2 = document.createElement("a");
+        a2.href = URL.createObjectURL(catBlob);
+        a2.download = "episode-categories-custom.json";
+        a2.click();
+
+        alert("JSON bestanden gedownload!\\n\\nUpload ze naar je bucket:\\n\\ns3cmd put --acl-public --mime-type=application/json episode-images-custom.json s3://peoplepower-radio/episode-images-custom.json\\n\\ns3cmd put --acl-public --mime-type=application/json episode-categories-custom.json s3://peoplepower-radio/episode-categories-custom.json");
+      }, 500);
+    }
+
+    function escapeHtml(s) {
+      return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    if (sessionStorage.getItem(TOKEN_KEY)) showAdmin();
+    document.getElementById("login-pw").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doLogin();
+    });
+  </script>
+</body>
+</html>

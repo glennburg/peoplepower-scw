@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alle afleveringen | People Power</title>
+  <meta name="description" content="Alle afleveringen van People Power. Ruim 10 jaar radio en podcast over HR, leiderschap, werkgeluk en de toekomst van werk. Elke maandag live op New Business Radio." />
+  <link rel="canonical" href="https://peoplepower.radio/afleveringen.html" />
+  <link rel="icon" type="image/png" href="/logo-pp-orange-favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YGXLQLH4FG"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-YGXLQLH4FG');
+  </script>
+</head>
+<body>
+
+  <a href="#main-content" class="skip-link">Sla navigatie over</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="brand">
+        <img src="/logo-pp-full.png" alt="People Power, terug naar de homepage" class="brand-logo-full" />
+      </a>
+      <nav class="main-nav" aria-label="Hoofdnavigatie">
+        <a href="/">Home</a>
+        <a href="/afleveringen.html" class="nav-active">Afleveringen</a>
+        <a href="/themas.html">Thema's</a>
+        <a href="/over.html">Over</a>
+        <a href="/partner.html">Vaker te gast</a>
+        <a href="/contact.html">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Sticky mini player -->
+  <div class="mini-player" id="mini-player">
+    <div class="container mini-player-inner">
+      <img class="mini-player-img" id="mini-player-img" src="" alt="" />
+      <button class="mini-player-btn" id="mini-player-btn" aria-label="Speel af">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="mini-player-info">
+        <div class="mini-player-title" id="mini-player-title"></div>
+        <div class="mini-player-meta" id="mini-player-meta"></div>
+      </div>
+      <div class="mini-player-progress" id="mini-player-progress">
+        <div class="mini-player-fill" id="mini-player-fill"></div>
+      </div>
+    </div>
+    <audio id="audio" preload="none"></audio>
+  </div>
+
+  <div class="page-banner">
+    <div class="container">
+      <h1 class="page-banner-title">Alle afleveringen</h1>
+    </div>
+  </div>
+
+  <section class="episodes-page" id="main-content">
+    <div class="container">
+      <p class="page-subtitle" id="page-subtitle">Laden...</p>
+
+      <div class="ep-list" id="episode-grid" aria-live="polite" aria-atomic="true" aria-busy="true">
+        <div class="episode-loading">Afleveringen laden...</div>
+      </div>
+
+      <noscript>
+        <div class="noscript-fallback">
+          <p>Deze pagina toont de meest recente afleveringen van People Power, geladen vanuit onze podcast-feed. Schakel JavaScript in om alle afleveringen te bekijken.</p>
+          <p>
+            <a href="https://open.spotify.com/show/4X2GIU0blBAFkYzVbqTzpl" target="_blank" rel="noopener">Luister op Spotify</a>
+            &middot;
+            <a href="https://podcasts.apple.com/nl/podcast/new-business-radio-work/id1143830823" target="_blank" rel="noopener">Luister op Apple Podcasts</a>
+          </p>
+        </div>
+      </noscript>
+
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </section>
+
+  <footer class="site-footer" id="contact">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="/logo-pp-full.png" alt="People Power, terug naar de homepage" class="footer-logo-full" />
+        <div>
+          <div class="footer-tag">Een programma op New Business Radio</div>
+        </div>
+      </div>
+      <div class="footer-links">
+        <a href="https://open.spotify.com/show/4X2GIU0blBAFkYzVbqTzpl" target="_blank" rel="noopener">Spotify</a>
+        <a href="https://podcasts.apple.com/nl/podcast/new-business-radio-work/id1143830823" target="_blank" rel="noopener">Apple Podcasts</a>
+        <a href="/contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      &copy; 2026 People Power &middot; glenn@people-power.nl
+    </div>
+  </footer>
+
+  <script src="/config.js"></script>
+  <script>
+    const API_URL = window.PEOPLEPOWER_API_URL || "/api/episodes";
+    const PER_PAGE = 12;
+    const grid = document.getElementById("episode-grid");
+    const pagination = document.getElementById("pagination");
+    const subtitle = document.getElementById("page-subtitle");
+    const audio = document.getElementById("audio");
+    const miniPlayer = document.getElementById("mini-player");
+    const miniBtn = document.getElementById("mini-player-btn");
+    const miniTitle = document.getElementById("mini-player-title");
+    const miniMeta = document.getElementById("mini-player-meta");
+    const miniImg = document.getElementById("mini-player-img");
+    const miniProgress = document.getElementById("mini-player-progress");
+    const miniFill = document.getElementById("mini-player-fill");
+
+    const playIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+    const pauseIcon = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+    const defaultArt = "https://app.springcast.fm/storage/artwork/6377/17987/oDhDgpiQ7VVby0y9Cf7FZ7mnzNid492nygTLDxy6.png";
+
+    let allEpisodes = [];
+    let currentPage = 1;
+    let currentEp = null;
+    let imageData = {};
+    let customImages = {};
+    let categoryData = {};
+    let customCategories = {};
+
+    function escapeHtml(s) {
+      return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    function getCatsForEpisode(ep) {
+      if (ep.number && customCategories[ep.number]) return customCategories[ep.number];
+      if (ep.number && categoryData.byNumber && categoryData.byNumber[ep.number]) return categoryData.byNumber[ep.number];
+      if (categoryData.byTitle) {
+        const norm = ep.title.toLowerCase().replace(/\s+/g, ' ').trim();
+        if (categoryData.byTitle[norm]) return categoryData.byTitle[norm];
+      }
+      return [];
+    }
+
+    function catSlugToName(slug) {
+      const cats = categoryData.categories || [];
+      const c = cats.find(x => x.slug === slug);
+      return c ? c.name : slug;
+    }
+
+    function getBestImage(ep) {
+      if (ep.number && customImages[ep.number]) return customImages[ep.number];
+      if (ep.number && imageData.byNumber && imageData.byNumber[ep.number]) return imageData.byNumber[ep.number];
+      if (imageData.byTitle) {
+        const norm = ep.title.toLowerCase().replace(/\s+/g, ' ').trim();
+        if (imageData.byTitle[norm]) return imageData.byTitle[norm];
+      }
+      if (ep.imageUrl) return ep.imageUrl;
+      return defaultArt;
+    }
+
+    function playEpisode(ep) {
+      currentEp = ep;
+      audio.src = ep.audioUrl;
+      audio.play();
+      miniPlayer.classList.add("visible");
+      miniTitle.textContent = (ep.number ? "#" + ep.number + " " : "") + ep.title;
+      miniMeta.textContent = [ep.duration, ep.pubDateFormatted].filter(Boolean).join(" \u00b7 ");
+      miniImg.src = getBestImage(ep);
+      updatePlayingState();
+    }
+
+    function updatePlayingState() {
+      // Highlight active card
+      grid.querySelectorAll(".ep-row").forEach(row => {
+        const idx = parseInt(row.dataset.idx, 10);
+        row.classList.toggle("ep-row-playing", currentEp && allEpisodes[idx]?.id === currentEp.id);
+      });
+    }
+
+    miniBtn.addEventListener("click", () => {
+      if (!currentEp) return;
+      if (audio.paused) audio.play(); else audio.pause();
+    });
+    audio.addEventListener("play", () => { miniBtn.innerHTML = pauseIcon; });
+    audio.addEventListener("pause", () => { miniBtn.innerHTML = playIcon; });
+    audio.addEventListener("timeupdate", () => {
+      if (audio.duration) {
+        miniFill.style.width = (audio.currentTime / audio.duration * 100) + "%";
+      }
+    });
+    miniProgress.addEventListener("click", (e) => {
+      if (audio.duration) {
+        const pct = (e.clientX - miniProgress.getBoundingClientRect().left) / miniProgress.offsetWidth;
+        audio.currentTime = pct * audio.duration;
+      }
+    });
+
+    function getPageFromURL() {
+      const p = new URLSearchParams(window.location.search).get("pagina");
+      return p ? Math.max(1, parseInt(p, 10) || 1) : 1;
+    }
+
+    function renderPage(page) {
+      currentPage = page;
+      const total = allEpisodes.length;
+      const totalPages = Math.ceil(total / PER_PAGE);
+      const start = (page - 1) * PER_PAGE;
+      const slice = allEpisodes.slice(start, start + PER_PAGE);
+
+      subtitle.textContent = total + " afleveringen \u00b7 Pagina " + page + " van " + totalPages;
+
+      grid.innerHTML = slice.map((ep, i) => {
+        const globalIdx = start + i;
+        const art = escapeHtml(getBestImage(ep));
+        return '<article class="ep-row" data-idx="' + globalIdx + '">' +
+          '<div class="ep-row-art">' +
+            '<img src="' + art + '" alt="" loading="lazy" />' +
+            '<button class="ep-row-play" data-idx="' + globalIdx + '" aria-label="Speel af">' +
+              '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+            '</button>' +
+          '</div>' +
+          '<div class="ep-row-body">' +
+            '<div class="ep-row-num">' + (ep.number ? "#" + ep.number : "") + ' \u00b7 ' + (ep.pubDateFormatted || "") + '</div>' +
+            '<h3 class="ep-row-title">' + escapeHtml(ep.title) + '</h3>' +
+            '<p class="ep-row-desc">' + escapeHtml(ep.description) + '</p>' +
+            '<div class="ep-row-bottom">' +
+              '<span class="ep-row-meta">' + (ep.duration || "") + '</span>' +
+              '<span class="ep-row-cats">' + getCatsForEpisode(ep).map(function(s) { return '<span class="ep-cat-tag">' + escapeHtml(catSlugToName(s)) + '</span>'; }).join("") + '</span>' +
+            '</div>' +
+          '</div>' +
+        '</article>';
+      }).join("");
+
+      // Play buttons
+      grid.querySelectorAll(".ep-row-play").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.dataset.idx, 10);
+          playEpisode(allEpisodes[idx]);
+        });
+      });
+
+      // Click row -> detail page
+      grid.querySelectorAll(".ep-row").forEach(row => {
+        row.addEventListener("click", (e) => {
+          if (e.target.closest(".ep-row-play")) return;
+          const idx = parseInt(row.dataset.idx, 10);
+          const ep = allEpisodes[idx];
+          window.location.href = "/aflevering.html?idx=" + idx + "&id=" + encodeURIComponent(ep.id);
+        });
+      });
+
+      updatePlayingState();
+
+      // Pagination
+      let phtml = "";
+      if (page > 1) {
+        phtml += '<a href="?pagina=' + (page - 1) + '" class="pag-btn">&larr; Vorige</a>';
+      }
+      phtml += '<span class="pag-numbers">';
+      for (let p = 1; p <= totalPages; p++) {
+        if (p === 1 || p === totalPages || (p >= page - 2 && p <= page + 2)) {
+          if (p === page) {
+            phtml += '<span class="pag-current">' + p + '</span>';
+          } else {
+            phtml += '<a href="?pagina=' + p + '" class="pag-num">' + p + '</a>';
+          }
+        } else if (p === page - 3 || p === page + 3) {
+          phtml += '<span class="pag-dots">&hellip;</span>';
+        }
+      }
+      phtml += '</span>';
+      if (page < totalPages) {
+        phtml += '<a href="?pagina=' + (page + 1) + '" class="pag-btn pag-btn-next">Volgende</a>';
+      }
+      pagination.innerHTML = phtml;
+
+      const url = new URL(window.location);
+      url.searchParams.set("pagina", page);
+      history.replaceState(null, "", url);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    pagination.addEventListener("click", (e) => {
+      const link = e.target.closest("a");
+      if (!link) return;
+      e.preventDefault();
+      const p = new URLSearchParams(new URL(link.href).search).get("pagina");
+      if (p) renderPage(parseInt(p, 10));
+    });
+
+    function fetchWithTimeout(url, ms) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), ms);
+      return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
+    }
+
+    function showLoadError() {
+      grid.innerHTML =
+        '<div class="load-error">' +
+          '<h2>Afleveringen kunnen op dit moment niet geladen worden</h2>' +
+          '<p>Luister via Spotify of Apple Podcasts.</p>' +
+          '<div class="load-error-btns">' +
+            '<a href="https://open.spotify.com/show/4X2GIU0blBAFkYzVbqTzpl" target="_blank" rel="noopener" class="btn-platform btn-spotify">Luister op Spotify</a>' +
+            '<a href="https://podcasts.apple.com/nl/podcast/new-business-radio-work/id1143830823" target="_blank" rel="noopener" class="btn-platform btn-apple">Luister op Apple Podcasts</a>' +
+          '</div>' +
+        '</div>';
+      subtitle.textContent = "";
+      pagination.innerHTML = "";
+    }
+
+    async function init() {
+      try {
+        // Main episodes call has 8s timeout. Secondary metadata can fail silently.
+        const res = await fetchWithTimeout(API_URL, 8000);
+        if (!res.ok) throw new Error("Kon afleveringen niet laden");
+        const data = await res.json();
+        allEpisodes = data.episodes || [];
+        if (!allEpisodes.length) throw new Error("Geen afleveringen ontvangen");
+
+        // Load metadata in parallel (best effort, no hard failures)
+        const [imgRes, cusRes, catRes, cusCatRes] = await Promise.all([
+          fetch("/episode-images.json").catch(() => null),
+          fetch("/episode-images-custom.json").catch(() => null),
+          fetch("/episode-categories.json").catch(() => null),
+          fetch("/episode-categories-custom.json").catch(() => null),
+        ]);
+        if (imgRes && imgRes.ok) imageData = await imgRes.json();
+        if (cusRes && cusRes.ok) customImages = await cusRes.json();
+        if (catRes && catRes.ok) categoryData = await catRes.json();
+        if (cusCatRes && cusCatRes.ok) customCategories = await cusCatRes.json();
+
+        // Filter by thema if set in URL
+        const themaSlug = new URLSearchParams(window.location.search).get("thema");
+        if (themaSlug) {
+          allEpisodes = allEpisodes.filter(ep => getCatsForEpisode(ep).includes(themaSlug));
+          const cats = categoryData.categories || [];
+          const cat = cats.find(c => c.slug === themaSlug);
+          if (cat) {
+            document.querySelector(".page-banner-title").textContent = cat.name;
+            document.title = cat.name + " | People Power";
+          }
+        }
+
+        renderPage(getPageFromURL());
+        grid.setAttribute("aria-busy", "false");
+      } catch (err) {
+        console.error("Load error:", err);
+        showLoadError();
+        grid.setAttribute("aria-busy", "false");
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
