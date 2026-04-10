@@ -699,7 +699,10 @@ def render_thema_detail(thema_slug: str, thema_meta: dict, eps: list) -> str:
                          current_nav="/themas.html")
 
 
-def render_themas_overview(theme_counts: dict, thema_meta_map: dict) -> str:
+def render_themas_overview(active_themas: dict, thema_meta_map: dict) -> str:
+    """Overview page met per thema een korte lijst van 2 recente afleveringen.
+    Themas gesorteerd op de datum van de nieuwste aflevering (aflopend).
+    """
     canonical = f"{SITE_URL}/themas.html"
     title = "Thema's | People Power podcast over HR en leiderschap"
     meta_desc = (
@@ -708,23 +711,40 @@ def render_themas_overview(theme_counts: dict, thema_meta_map: dict) -> str:
         "Ruim 600 afleveringen doorzoekbaar per thema."
     )[:155]
 
-    # Sorteer themas op aantal afleveringen aflopend
-    items = sorted(theme_counts.items(), key=lambda kv: -kv[1])
+    # Sorteer themas op de pub_date_iso van de nieuwste aflevering (list[0])
+    # Episodes zijn in de episode-list al newest-first, dus eps[0] is de nieuwste.
+    def newest_iso(eps):
+        return eps[0]['pub_date_iso'] if eps else ""
 
-    cards_html_parts = []
-    for slug, count in items:
-        meta = thema_meta_map[slug]
-        label = meta["label"]
-        desc = meta["description"]
-        cards_html_parts.append(
-            f"""        <article class="thema-card">
-          <h2 class="thema-card-title"><a href="/themas/{slug}.html">{html.escape(label)}</a></h2>
-          <p class="thema-card-desc">{html.escape(desc)}</p>
-          <div class="thema-card-meta">{count} afleveringen</div>
-          <a href="/themas/{slug}.html" class="link-more">Bekijk afleveringen</a>
-        </article>"""
+    items = sorted(
+        active_themas.items(),
+        key=lambda kv: newest_iso(kv[1]),
+        reverse=True,
+    )
+
+    sections = []
+    for slug, eps in items:
+        label = thema_meta_map[slug]["label"]
+        count = len(eps)
+        # Sorteer aflevering-lijst zelf ook op datum aflopend (voor zekerheid)
+        top_two = sorted(eps, key=lambda e: e['pub_date_iso'] or "", reverse=True)[:2]
+        cards_html = "\n".join(render_thema_card(ep) for ep in top_two)
+        sections.append(
+            f"""        <section class="thema-section">
+          <div class="thema-head">
+            <h2 class="thema-title"><a href="/themas/{slug}.html">{html.escape(label)}</a></h2>
+            <span class="thema-count">{count} afleveringen</span>
+          </div>
+          <div class="ep-list ep-list-2col">
+{cards_html}
+          </div>
+          <div class="thema-more">
+            <a href="/themas/{slug}.html" class="btn-more">Meer {html.escape(label)}</a>
+          </div>
+        </section>"""
         )
-    cards_html = "\n".join(cards_html_parts)
+
+    sections_joined = "\n".join(sections)
 
     main_html = f"""    <div class="page-banner">
       <div class="container">
@@ -740,9 +760,7 @@ def render_themas_overview(theme_counts: dict, thema_meta_map: dict) -> str:
           HR en de toekomst van werk.
         </p>
 
-        <div class="thema-grid">
-{cards_html}
-        </div>
+{sections_joined}
       </div>
     </section>"""
 
@@ -944,9 +962,8 @@ def main():
     print(f"   Gegenereerd: {len(active_themas)} thema-detailpagina(s)")
 
     # 8b. Thema-overzichtspagina (themas.html)
-    theme_counts = {slug: len(eps) for slug, eps in active_themas.items()}
     (DIST / "themas.html").write_text(
-        render_themas_overview(theme_counts, thema_meta_map), encoding="utf-8")
+        render_themas_overview(active_themas, thema_meta_map), encoding="utf-8")
     print("   Gegenereerd: themas.html (overzicht)")
 
     # 7. Sitemap
