@@ -50,51 +50,30 @@ MONTHS_NL = [
     "juli", "augustus", "september", "oktober", "november", "december",
 ]
 
-# Thema-classificatie op basis van keywords in titel + beschrijving.
-# Onafhankelijk van de WordPress category-data; deze themas worden puur op
-# de RSS-tekst afgeleid en dienen als SEO-landingspagina's.
+# Drempel voor thema-landingspagina's
 MIN_EPISODES_PER_THEMA = 5
-THEMAS = {
-    "leiderschap": {
-        "label": "Leiderschap",
-        "description": "Wat maakt een goede leider? People Power bespreekt leiderschapsstijlen, leiderschapsontwikkeling en de menselijke kant van leiding geven.",
-        "keywords": ["leiderschap", "leider", "leidinggevende", "manager", "directeur", "bestuurder", "management", "leidinggeven"],
-    },
-    "werkgeluk": {
-        "label": "Werkgeluk",
-        "description": "Gelukkige mensen presteren beter. People Power onderzoekt wat werkgeluk drijft en hoe organisaties een omgeving bouwen waarin mensen echt kunnen floreren.",
-        "keywords": ["werkgeluk", "geluk", "bevlogenheid", "plezier", "motivatie", "welzijn", "vitaliteit", "burnout", "werkdruk"],
-    },
-    "organisatieontwikkeling": {
-        "label": "Organisatieontwikkeling",
-        "description": "Hoe verander je een organisatie zonder de mensen te verliezen? Over cultuur, structuur en de kunst van het organiseren.",
-        "keywords": ["organisatieverandering", "verandering", "cultuur", "transformatie", "agile", "zelfsturing", "organisatie", "structuur"],
-    },
-    "arbeidsmarkt": {
-        "label": "Arbeidsmarkt",
-        "description": "De arbeidsmarkt verandert razendsnel. People Power volgt trends in werving, retentie, ZZP, arbeidsomstandigheden en de toekomst van werk.",
-        "keywords": ["arbeidsmarkt", "werving", "selectie", "recruitment", "retentie", "zzp", "flexibel", "ontslagen", "schaarste", "talent"],
-    },
-    "leren-en-ontwikkelen": {
-        "label": "Leren & Ontwikkelen",
-        "description": "Een leven lang leren is geen slogan maar een noodzaak. Over leerstrategieen, loopbaanontwikkeling en hoe organisaties continu leren inbedden.",
-        "keywords": ["leren", "ontwikkelen", "opleiding", "training", "loopbaan", "ontwikkeling", "skills", "competentie", "talent"],
-    },
-    "diversiteit-en-inclusie": {
-        "label": "Diversiteit & Inclusie",
-        "description": "Diverse teams presteren beter, als de cultuur inclusief is. People Power bespreekt de praktijk van diversiteitsbeleid en inclusief leiderschap.",
-        "keywords": ["diversiteit", "inclusie", "inclusief", "gelijkwaardigheid", "discriminatie", "neurodiversiteit", "vrouwen", "gender"],
-    },
-    "toekomst-van-werk": {
-        "label": "Toekomst van werk",
-        "description": "AI, hybride werken, robotisering en globalisering veranderen werk fundamenteel. Wat betekent dat voor mensen en organisaties?",
-        "keywords": ["toekomst", "ai", "automatisering", "hybride", "thuiswerken", "innovatie", "technologie", "digitalisering", "robot"],
-    },
-    "strategisch-hr": {
-        "label": "Strategisch HR",
-        "description": "HR als strategische partner van de directie. Over HR-beleid, people analytics, employer branding en de rol van HR in organisatiesucces.",
-        "keywords": ["hr", "human resources", "personeelsbeleid", "employer branding", "people analytics", "hrm", "strategisch hr"],
-    },
+
+# SEO-descriptions per WordPress-category slug.
+# De categorie-data zelf komt uit episode-categories.json (live uit de bucket).
+# Deze descriptions worden gebruikt in <title>, <meta description>, <h1> lead-paragraaf
+# en het JSON-LD op de thema-detail- en overzichtspagina's.
+THEMA_DESCRIPTIONS = {
+    "employability": "Employability: hoe houd je mensen duurzaam inzetbaar? People Power over loopbaan, leren, gezondheid en werkvermogen in een veranderende arbeidsmarkt.",
+    "verandering-innovatie": "Organisatieverandering en innovatie: hoe verander je een organisatie zonder de mensen te verliezen? Over cultuur, structuur en nieuwe manieren van werken.",
+    "learning-development": "Learning en Development: een leven lang leren in de praktijk. Over leerstrategieen, talentontwikkeling en hoe je een lerende organisatie bouwt.",
+    "engagement": "Engagement: wat maakt mensen echt betrokken? People Power over bevlogenheid, motivatie en het bouwen van teams waar mensen graag bij willen horen.",
+    "leiderschap": "Leiderschap: wat maakt een goede leider? Over leiderschapsstijlen, de menselijke kant van leiding geven en hoe leiders mensen laten groeien.",
+    "inclusie": "Inclusie: diverse teams presteren beter, als de cultuur inclusief is. Over diversiteitsbeleid, inclusief leiderschap en gelijke kansen op werk.",
+    "impact": "Impact: werken met betekenis. People Power over maatschappelijke bijdrage, duurzaamheid en organisaties die meer willen dan alleen winst maken.",
+    "people-power-special": "People Power Specials: de bijzondere afleveringen met events, jubilea en verdiepende interviews over de grote vragen van werk.",
+    "people-power-books": "People Power Boeken: interviews met auteurs over de beste boeken over HR, leiderschap, werkgeluk en organisatieontwikkeling.",
+    "future-of-work": "Future of Work: hoe verandert werk door AI, hybride werken en globalisering? Samen met de Future of Work Hub van de Universiteit Utrecht.",
+    "motivatie": "Motivatie: wat drijft mensen in hun werk? Over intrinsieke motivatie, waardering en de psychologie van betrokkenheid op de werkvloer.",
+    "people-power-nieuws": "People Power Nieuws: updates over het programma, nieuwe partnerschappen en bijzondere aankondigingen.",
+    "lef-en-liefde": "Lef en Liefde: over de menselijke kant van werk. Moed, kwetsbaarheid en de zachte waarden die teams sterk maken.",
+    "werving-selectie": "Werving en Selectie: hoe vind je de juiste mensen in een krappe arbeidsmarkt? Over recruitment, employer branding en selectieprocessen.",
+    "persoonlijk": "Persoonlijke verhalen van gasten uit People Power. De mensen achter de organisaties, hun drijfveren en hoe ze in het werk staan.",
+    "onboarding": "Onboarding: de eerste indruk telt. Over de kunst van een goede start voor nieuwe medewerkers en hoe onboarding bijdraagt aan retentie.",
 }
 
 
@@ -289,18 +268,6 @@ def cat_slug_to_name(slug: str, cat_data: dict) -> str:
     return slug
 
 
-def classify_episode(title: str, description: str) -> list:
-    """Return list of thema slugs dat matcht op keywords in titel + description.
-    Case-insensitive substring match. Een aflevering kan meerdere themas krijgen.
-    """
-    haystack = f"{title or ''} {description or ''}".lower()
-    matched = []
-    for slug, meta in THEMAS.items():
-        for kw in meta["keywords"]:
-            if kw.lower() in haystack:
-                matched.append(slug)
-                break
-    return matched
 
 
 def parse_episodes(xml_text: str):
@@ -732,12 +699,12 @@ def render_thema_detail(thema_slug: str, thema_meta: dict, eps: list) -> str:
                          current_nav="/themas.html")
 
 
-def render_themas_overview(theme_counts: dict) -> str:
+def render_themas_overview(theme_counts: dict, thema_meta_map: dict) -> str:
     canonical = f"{SITE_URL}/themas.html"
     title = "Thema's | People Power podcast over HR en leiderschap"
     meta_desc = (
-        "Alle thema's van People Power: leiderschap, werkgeluk, HR, "
-        "organisatieontwikkeling, toekomst van werk en meer. "
+        "Alle thema's van People Power: leiderschap, employability, engagement, "
+        "learning en development, future of work en meer. "
         "Ruim 600 afleveringen doorzoekbaar per thema."
     )[:155]
 
@@ -746,7 +713,7 @@ def render_themas_overview(theme_counts: dict) -> str:
 
     cards_html_parts = []
     for slug, count in items:
-        meta = THEMAS[slug]
+        meta = thema_meta_map[slug]
         label = meta["label"]
         desc = meta["description"]
         cards_html_parts.append(
@@ -909,14 +876,25 @@ def main():
             ep['cats_rendered'] = ""
     print(f"   {match_count} afleveringen gematcht met guest foto (van {len(episodes)})")
 
-    # 4. Classificeer elke aflevering op keyword-themas
+    # 4. Classificeer elke aflevering via WordPress-categorieen (uit episode-categories.json)
+    # Eerder al op de episodes geplaatst als ep['cats']. Groepeer nu per thema.
     from collections import defaultdict
     themas_episodes = defaultdict(list)
     for ep in episodes:
-        ep_themas = classify_episode(ep['clean_title'], ep['description_text'])
-        ep['themas'] = ep_themas
-        for t in ep_themas:
-            themas_episodes[t].append(ep)
+        for t in ep.get('cats', []):
+            if t and t != "uncategorized":
+                themas_episodes[t].append(ep)
+
+    # Bouw de thema-metadata dict: label uit categoryData, description uit THEMA_DESCRIPTIONS
+    cat_label_map = {c.get("slug"): c.get("name") for c in cat_data.get("categories", [])}
+    thema_meta_map = {}
+    for slug in themas_episodes:
+        label = cat_label_map.get(slug, slug.replace("-", " ").title())
+        desc = THEMA_DESCRIPTIONS.get(
+            slug,
+            f"People Power over {label.lower()}. Alle afleveringen over dit thema op een rij."
+        )
+        thema_meta_map[slug] = {"label": label, "description": desc}
 
     # Thema's met genoeg afleveringen krijgen een eigen pagina
     active_themas = {
@@ -924,17 +902,19 @@ def main():
         if len(eps) >= MIN_EPISODES_PER_THEMA
     }
     skipped_themas = {
-        slug: len(themas_episodes.get(slug, [])) for slug in THEMAS
+        slug: len(eps) for slug, eps in themas_episodes.items()
         if slug not in active_themas
     }
 
     print(f"   {len(active_themas)} thema's actief (>= {MIN_EPISODES_PER_THEMA} afleveringen):")
     for slug, eps in sorted(active_themas.items(), key=lambda kv: -len(kv[1])):
-        print(f"     {slug:30s} {len(eps):4d} afleveringen")
+        label = thema_meta_map[slug]["label"]
+        print(f"     {slug:30s} {len(eps):4d} afleveringen  ({label})")
     if skipped_themas:
         print("   Onder drempel (geen pagina gegenereerd):")
         for slug, cnt in skipped_themas.items():
-            print(f"     {slug:30s} {cnt:4d} afleveringen")
+            label = thema_meta_map[slug]["label"]
+            print(f"     {slug:30s} {cnt:4d} afleveringen  ({label})")
 
     # 5. Output-dir voorbereiden
     DIST.mkdir(exist_ok=True)
@@ -959,14 +939,14 @@ def main():
 
     # 8a. Thema-detailpagina's
     for slug, eps in active_themas.items():
-        html_out = render_thema_detail(slug, THEMAS[slug], eps)
+        html_out = render_thema_detail(slug, thema_meta_map[slug], eps)
         (DIST / "themas" / f"{slug}.html").write_text(html_out, encoding="utf-8")
     print(f"   Gegenereerd: {len(active_themas)} thema-detailpagina(s)")
 
     # 8b. Thema-overzichtspagina (themas.html)
     theme_counts = {slug: len(eps) for slug, eps in active_themas.items()}
     (DIST / "themas.html").write_text(
-        render_themas_overview(theme_counts), encoding="utf-8")
+        render_themas_overview(theme_counts, thema_meta_map), encoding="utf-8")
     print("   Gegenereerd: themas.html (overzicht)")
 
     # 7. Sitemap
